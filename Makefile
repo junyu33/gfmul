@@ -19,7 +19,7 @@ else ifeq ($(ARCH), arm64)
     endif
 else ifeq ($(ARCH), riscv64)
     CXX = riscv64-linux-gnu-gcc
-    CXXFLAGS = -march=rv64gc -static
+    CXXFLAGS = -march=rv64gc_zve64x_zvbc -mabi=lp64d -static
     TARGET = gfmul_riscv64
     ifeq ($(RUN), qemu)
         RUN_CMD = qemu-riscv64 ./$(TARGET)
