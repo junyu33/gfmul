@@ -4,6 +4,8 @@ This is a simple implementation of the Galois Field multiplication in c++.
 
 This code is cross-ISA, including x86-64, ARM64 and riscv64.
 
+The irriducible polynomial is $x^{128} + x^7 + x^2 + x + 1$.
+
 ## dependencies (in typical x86-64 machine)
 
 ### debian based
