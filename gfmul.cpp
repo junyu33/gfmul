@@ -215,10 +215,10 @@ inline void gfmul(__m128i a, __m128i b, __m128i *res){
     srl128_epi32(tmp6, 25, &tmp9);
     tmp7 = tmp7 ^ tmp8;
     tmp7 = tmp7 ^ tmp9;
-    tmp8 = ((__m128i)(tmp7 >> 96) & 0xffffffff) << 32 | 
-           ((__m128i)(tmp7 >> 64) & 0xffffffff) << 96 |
-           ((__m128i)(tmp7 >> 32) & 0xffffffff) << 64 |
-           ((__m128i)(tmp7) & 0xffffffff);
+    tmp8 = ((__m128i)(tmp7 >> 0) & 0xffffffff) << 32 | 
+           ((__m128i)(tmp7 >> 32) & 0xffffffff) << 96 |
+           ((__m128i)(tmp7 >> 64) & 0xffffffff) << 64 |
+           ((__m128i)(tmp7 >> 96) & 0xffffffff);
                     
 
     tmp7 = tmp8 & 0xffffffff;
