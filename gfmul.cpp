@@ -151,7 +151,8 @@ inline void gfmul (__m128i a, __m128i b, __m128i *res){
 inline void gfmul(__m128i a, __m128i b, __m128i *res){
     uint32x4_t tmp3, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
     uint8x16_t Tmp3, Tmp6;
-    uint32x4_t XMMMASK = vdupq_n_u32(0xffffffff);
+    uint32x4_t XMMMASK = {0xffffffff, 0x0, 0x0, 0x0};
+    uint32x4_t INV_XMMMASK = {0x0, 0xffffffff, 0xffffffff, 0xffffffff};
     mul128(a, b, &Tmp3, &Tmp6);
     tmp3 = vreinterpretq_u32_u8(Tmp3);
     tmp6 = vreinterpretq_u32_u8(Tmp6);
@@ -160,13 +161,14 @@ inline void gfmul(__m128i a, __m128i b, __m128i *res){
     tmp9 = vshrq_n_u32(tmp6, 25);
     tmp7 = veorq_u32(tmp7, tmp8);
     tmp7 = veorq_u32(tmp7, tmp9);
-    tmp8 = vsetq_lane_u32(vgetq_lane_u32(tmp7, 3), tmp8, 0);  
-    tmp8 = vsetq_lane_u32(vgetq_lane_u32(tmp7, 0), tmp8, 1);  
-    tmp8 = vsetq_lane_u32(vgetq_lane_u32(tmp7, 2), tmp8, 2);  
-    tmp8 = vsetq_lane_u32(vgetq_lane_u32(tmp7, 1), tmp8, 3);  
+
+    tmp8 = vsetq_lane_u32(vgetq_lane_u32(tmp7, 3), tmp8, 0);
+    tmp8 = vsetq_lane_u32(vgetq_lane_u32(tmp7, 2), tmp8, 3);
+    tmp8 = vsetq_lane_u32(vgetq_lane_u32(tmp7, 1), tmp8, 2);
+    tmp8 = vsetq_lane_u32(vgetq_lane_u32(tmp7, 0), tmp8, 1);
 
     tmp7 = vandq_u32(tmp8, XMMMASK);
-    tmp8 = vbicq_u32(tmp8, XMMMASK);
+    tmp8 = vandq_u32(tmp8, INV_XMMMASK);
     tmp3 = veorq_u32(tmp3, tmp8);
     tmp6 = veorq_u32(tmp6, tmp7);
     tmp10 = vshlq_n_u32(tmp6, 1);
@@ -215,10 +217,10 @@ inline void gfmul(__m128i a, __m128i b, __m128i *res){
     srl128_epi32(tmp6, 25, &tmp9);
     tmp7 = tmp7 ^ tmp8;
     tmp7 = tmp7 ^ tmp9;
-    tmp8 = ((__m128i)(tmp7 >> 0) & 0xffffffff) << 32 | 
-           ((__m128i)(tmp7 >> 32) & 0xffffffff) << 96 |
-           ((__m128i)(tmp7 >> 64) & 0xffffffff) << 64 |
-           ((__m128i)(tmp7 >> 96) & 0xffffffff);
+    tmp8 = ((__m128i)(tmp7 >> 96) & 0xffffffff) << 0 | 
+           ((__m128i)(tmp7 >> 64) & 0xffffffff) << 96 |
+           ((__m128i)(tmp7 >> 32) & 0xffffffff) << 64 |
+           ((__m128i)(tmp7) & 0xffffffff) << 32;
                     
 
     tmp7 = tmp8 & 0xffffffff;

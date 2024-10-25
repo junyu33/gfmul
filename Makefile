@@ -9,7 +9,7 @@ ifeq ($(ARCH), x86_64)
     TARGET = gfmul_x86_64
     RUN_CMD = ./$(TARGET)
 else ifeq ($(ARCH), arm64)
-    CXX = aarch64-linux-gnu-gcc
+    CXX = aarch64-linux-gnu-g++
     CXXFLAGS = -march=armv8.1-a+crypto -static
     TARGET = gfmul_arm64
     ifeq ($(RUN), qemu)
@@ -18,7 +18,7 @@ else ifeq ($(ARCH), arm64)
         RUN_CMD = ./$(TARGET)
     endif
 else ifeq ($(ARCH), riscv64)
-    CXX = riscv64-linux-gnu-gcc
+    CXX = riscv64-linux-gnu-g++
     CXXFLAGS = -march=rv64gc_zve64x_zvbc -mabi=lp64d -static
     TARGET = gfmul_riscv64
     ifeq ($(RUN), qemu)
