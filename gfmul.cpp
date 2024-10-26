@@ -5,7 +5,7 @@
 #include <immintrin.h>
 #elif __aarch64__
 #include <arm_neon.h>
-#define __m128i uint8x16_t
+#define __m128i uint64x2_t
 #elif __riscv
 #include <riscv_vector.h>
 #define __m128i __int128
@@ -15,7 +15,7 @@ void print128(__m128i var)
 {
     int64_t v64val[2];
     memcpy(v64val, &var, sizeof(v64val));
-    printf("%.16llx%.16llx", v64val[1], v64val[0]);
+    printf("%.16lx%.16lx", v64val[1], v64val[0]);
 }
 
 
@@ -41,22 +41,22 @@ inline void mul128(__m128i a, __m128i b, __m128i *res1, __m128i *res2) {
 #elif __aarch64__
 inline void mul128(__m128i a, __m128i b, __m128i *res1, __m128i *res2) {
     __m128i tmp3, tmp4, tmp5, tmp6;
-    poly64_t a_lo = (poly64_t)vgetq_lane_u64(vreinterpretq_u64_u8(a), 0);
-    poly64_t b_lo = (poly64_t)vgetq_lane_u64(vreinterpretq_u64_u8(b), 0);
-    poly64_t a_hi = (poly64_t)vgetq_lane_u64(vreinterpretq_u64_u8(a), 1);
-    poly64_t b_hi = (poly64_t)vgetq_lane_u64(vreinterpretq_u64_u8(b), 1);
+    poly64_t a_lo = (poly64_t)vgetq_lane_u64(a, 0);
+    poly64_t b_lo = (poly64_t)vgetq_lane_u64(b, 0);
+    poly64_t a_hi = (poly64_t)vgetq_lane_u64(a, 1);
+    poly64_t b_hi = (poly64_t)vgetq_lane_u64(b, 1);
 
-    tmp3 = vreinterpretq_u8_p128(vmull_p64(a_lo, b_lo));
-    tmp4 = vreinterpretq_u8_p128(vmull_p64(a_hi, b_lo));
-    tmp5 = vreinterpretq_u8_p128(vmull_p64(a_lo, b_hi));
-    tmp6 = vreinterpretq_u8_p128(vmull_p64(a_hi, b_hi));
+    tmp3 = vreinterpretq_u64_p128(vmull_p64(a_lo, b_lo));
+    tmp4 = vreinterpretq_u64_p128(vmull_p64(a_hi, b_lo));
+    tmp5 = vreinterpretq_u64_p128(vmull_p64(a_lo, b_hi));
+    tmp6 = vreinterpretq_u64_p128(vmull_p64(a_hi, b_hi));
 
-    tmp4 = veorq_u8(tmp4, tmp5);
-    __m128i result, zero = vdupq_n_u8(0);
-    tmp5 = vextq_u8(zero, tmp4, 8);
-    tmp4 = vextq_u8(tmp4, zero, 8); // shift left by 8 bytes
-    tmp3 = veorq_u8(tmp3, tmp5);
-    tmp6 = veorq_u8(tmp6, tmp4);
+    tmp4 = veorq_u64(tmp4, tmp5);
+    __m128i zero = vdupq_n_u64(0);
+    tmp5 = vextq_u64(zero, tmp4, 1);
+    tmp4 = vextq_u64(tmp4, zero, 1); 
+    tmp3 = veorq_u64(tmp3, tmp5);
+    tmp6 = veorq_u64(tmp6, tmp4);
 
     *res1 = tmp3;
     *res2 = tmp6;
@@ -149,62 +149,55 @@ inline void gfmul (__m128i a, __m128i b, __m128i *res){
 }
 #elif __aarch64__
 inline void gfmul(__m128i a, __m128i b, __m128i *res){
-    uint32x4_t tmp3, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
-    uint8x16_t Tmp3, Tmp6;
-    uint32x4_t XMMMASK = {0xffffffff, 0x0, 0x0, 0x0};
-    uint32x4_t INV_XMMMASK = {0x0, 0xffffffff, 0xffffffff, 0xffffffff};
-    mul128(a, b, &Tmp3, &Tmp6);
-    tmp3 = vreinterpretq_u32_u8(Tmp3);
-    tmp6 = vreinterpretq_u32_u8(Tmp6);
-    tmp7 = vshrq_n_u32(tmp6, 31);
-    tmp8 = vshrq_n_u32(tmp6, 30);
-    tmp9 = vshrq_n_u32(tmp6, 25);
-    tmp7 = veorq_u32(tmp7, tmp8);
-    tmp7 = veorq_u32(tmp7, tmp9);
+    uint64x2_t tmp3, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
+    uint64x2_t XMMMASK = {0xffffffffffffffff, 0x0};
+    uint64x2_t INV_XMMMASK = {0x0, 0xffffffffffffffff};
+    mul128(a, b, &tmp3, &tmp6);
+    tmp7 = vshrq_n_u64(tmp6, 63);
+    tmp8 = vshrq_n_u64(tmp6, 62);
+    tmp9 = vshrq_n_u64(tmp6, 57);
+    tmp7 = veorq_u64(tmp7, tmp8);
+    tmp7 = veorq_u64(tmp7, tmp9);
+    tmp8 = vextq_u64(tmp7, tmp7, 1);
 
-    tmp8 = vsetq_lane_u32(vgetq_lane_u32(tmp7, 3), tmp8, 0);
-    tmp8 = vsetq_lane_u32(vgetq_lane_u32(tmp7, 2), tmp8, 3);
-    tmp8 = vsetq_lane_u32(vgetq_lane_u32(tmp7, 1), tmp8, 2);
-    tmp8 = vsetq_lane_u32(vgetq_lane_u32(tmp7, 0), tmp8, 1);
+    tmp7 = vandq_u64(tmp8, XMMMASK);
+    tmp8 = vandq_u64(tmp8, INV_XMMMASK);
+    tmp3 = veorq_u64(tmp3, tmp8);
+    tmp6 = veorq_u64(tmp6, tmp7);
+    tmp10 = vshlq_n_u64(tmp6, 1);
+    tmp3 = veorq_u64(tmp3, tmp10);
+    tmp11 = vshlq_n_u64(tmp6, 2);
+    tmp3 = veorq_u64(tmp3, tmp11);
+    tmp12 = vshlq_n_u64(tmp6, 7);
+    tmp3 = veorq_u64(tmp3, tmp12);
 
-    tmp7 = vandq_u32(tmp8, XMMMASK);
-    tmp8 = vandq_u32(tmp8, INV_XMMMASK);
-    tmp3 = veorq_u32(tmp3, tmp8);
-    tmp6 = veorq_u32(tmp6, tmp7);
-    tmp10 = vshlq_n_u32(tmp6, 1);
-    tmp3 = veorq_u32(tmp3, tmp10);
-    tmp11 = vshlq_n_u32(tmp6, 2);
-    tmp3 = veorq_u32(tmp3, tmp11);
-    tmp12 = vshlq_n_u32(tmp6, 7);
-    tmp3 = veorq_u32(tmp3, tmp12);
-
-    *res = vreinterpretq_u8_u32(veorq_u32(tmp3, tmp6));
+    *res = veorq_u64(tmp3, tmp6);
 }
 #elif __riscv
-void sll128_epi32(__m128i vec, uint32_t shift_amount, __m128i *result) {
-    uint32_t *vec_ptr = (uint32_t *)&vec;
-    uint32_t *res_ptr = (uint32_t *)result;
+void sll128_epi64(__m128i vec, uint64_t shift_amount, __m128i *result) {
+    uint64_t *vec_ptr = (uint64_t *)&vec;
+    uint64_t *res_ptr = (uint64_t *)result;
 
     __asm__ __volatile__ (
-        "vsetvli t0, x0, e32, m1\n"          // Set vector length to 32-bit elements (4 elements)
-        "vle32.v v1, (%1)\n"                 // Load vec into v1 (4x32-bit elements)
-        "vsll.vx v2, v1, %2\n"               // Perform shift left logical on v1 by shift_amount
-        "vse32.v v2, (%0)\n"                 // Store result from v2 into memory (res_ptr)
-        :                                   // No outputs
+        "vsetvli t0, x0, e64, m1\n"          
+        "vle64.v v1, (%1)\n"                 
+        "vsll.vx v2, v1, %2\n"               
+        "vse64.v v2, (%0)\n"                 
+        :                                  
         : "r"(res_ptr), "r"(vec_ptr), "r"(shift_amount)
         : "t0", "v1", "v2", "memory"
     );
 }
-void srl128_epi32(__m128i vec, uint32_t shift_amount, __m128i *result) {
-    uint32_t *vec_ptr = (uint32_t *)&vec;
-    uint32_t *res_ptr = (uint32_t *)result;
+void srl128_epi64(__m128i vec, uint64_t shift_amount, __m128i *result) {
+    uint64_t *vec_ptr = (uint64_t *)&vec;
+    uint64_t *res_ptr = (uint64_t *)result;
 
     __asm__ __volatile__ (
-        "vsetvli t0, x0, e32, m1\n"          // Set vector length to 32-bit elements (4 elements)
-        "vle32.v v1, (%1)\n"                 // Load vec into v1 (4x32-bit elements)
-        "vsrl.vx v2, v1, %2\n"               // Perform shift right logical on v1 by shift_amount
-        "vse32.v v2, (%0)\n"                 // Store result from v2 into memory (res_ptr)
-        :                                   // No outputs
+        "vsetvli t0, x0, e64, m1\n"        
+        "vle64.v v1, (%1)\n"                 
+        "vsrl.vx v2, v1, %2\n"               
+        "vse64.v v2, (%0)\n"                 
+        :                                   
         : "r"(res_ptr), "r"(vec_ptr), "r"(shift_amount)
         : "t0", "v1", "v2", "memory"
     );
@@ -212,26 +205,22 @@ void srl128_epi32(__m128i vec, uint32_t shift_amount, __m128i *result) {
 inline void gfmul(__m128i a, __m128i b, __m128i *res){
     __m128i tmp3, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
     mul128(a, b, &tmp3, &tmp6);
-    srl128_epi32(tmp6, 31, &tmp7);
-    srl128_epi32(tmp6, 30, &tmp8);
-    srl128_epi32(tmp6, 25, &tmp9);
+    srl128_epi64(tmp6, 63, &tmp7);
+    srl128_epi64(tmp6, 62, &tmp8);
+    srl128_epi64(tmp6, 57, &tmp9);
     tmp7 = tmp7 ^ tmp8;
     tmp7 = tmp7 ^ tmp9;
-    tmp8 = ((__m128i)(tmp7 >> 96) & 0xffffffff) << 0 | 
-           ((__m128i)(tmp7 >> 64) & 0xffffffff) << 96 |
-           ((__m128i)(tmp7 >> 32) & 0xffffffff) << 64 |
-           ((__m128i)(tmp7) & 0xffffffff) << 32;
-                    
+    tmp8 = (tmp7 >> 64) ^ (tmp7 << 64);
 
     tmp7 = tmp8 & 0xffffffff;
-    tmp8 = (tmp8 >> 32) << 32;
+    tmp8 = (tmp8 >> 64) << 64;
     tmp3 = tmp3 ^ tmp8;
     tmp6 = tmp6 ^ tmp7;
-    sll128_epi32(tmp6, 1, &tmp10);
+    sll128_epi64(tmp6, 1, &tmp10);
     tmp3 = tmp3 ^ tmp10;
-    sll128_epi32(tmp6, 2, &tmp11);
+    sll128_epi64(tmp6, 2, &tmp11);
     tmp3 = tmp3 ^ tmp11;
-    sll128_epi32(tmp6, 7, &tmp12);
+    sll128_epi64(tmp6, 7, &tmp12);
     tmp3 = tmp3 ^ tmp12;
 
     *res = tmp3 ^ tmp6;
@@ -240,8 +229,8 @@ inline void gfmul(__m128i a, __m128i b, __m128i *res){
 
 int main() {
     uint64_t mul1[2], mul2[2];
-    scanf("%16llx%16llx", &mul1[1], &mul1[0]);
-    scanf("%16llx%16llx", &mul2[1], &mul2[0]);
+    scanf("%16lx%16lx", &mul1[1], &mul1[0]);
+    scanf("%16lx%16lx", &mul2[1], &mul2[0]);
 
     // Define test cases
 #ifdef __x86_64__
@@ -250,8 +239,8 @@ int main() {
     __m128i b = _mm_set_epi64x(mul2[1], mul2[0]);
 #elif __aarch64__
     // Test case for ARM architecture
-    uint8x16_t a = vreinterpretq_u8_u64(vcombine_u64(vld1_u64(mul1), vld1_u64(mul1 + 1)));
-    uint8x16_t b = vreinterpretq_u8_u64(vcombine_u64(vld1_u64(mul2), vld1_u64(mul2 + 1)));
+    uint64x2_t a = vcombine_u64(vld1_u64(mul1), vld1_u64(mul1 + 1));
+    uint64x2_t b = vcombine_u64(vld1_u64(mul2), vld1_u64(mul2 + 1));
 #elif __riscv
     // Test case for RISC-V architecture
     __int128 a = mul1[1];
@@ -268,28 +257,3 @@ int main() {
 
     return 0;
 }
-
-/*
- * inline void mul128_v2(__m128i a, __m128i b, __m128i *res1, __m128i *res2) {
-    uint32x4_t tmp3, tmp4, tmp5, tmp6;
-    poly64_t a_lo = (poly64_t)vgetq_lane_u64(vreinterpretq_u64_u8(a), 0);
-    poly64_t b_lo = (poly64_t)vgetq_lane_u64(vreinterpretq_u64_u8(b), 0);
-    poly64_t a_hi = (poly64_t)vgetq_lane_u64(vreinterpretq_u64_u8(a), 1);
-    poly64_t b_hi = (poly64_t)vgetq_lane_u64(vreinterpretq_u64_u8(b), 1);
-
-    tmp3 = vreinterpretq_u32_p128(vmull_p64(a_lo, b_lo));
-    tmp4 = vreinterpretq_u32_p128(vmull_p64(a_hi, b_lo));
-    tmp5 = vreinterpretq_u32_p128(vmull_p64(a_lo, b_hi));
-    tmp6 = vreinterpretq_u32_p128(vmull_p64(a_hi, b_hi));
-
-    tmp4 = veorq_u32(tmp4, tmp5);
-    uint32x4_t zero = vdupq_n_u32(0);
-    tmp5 = vextq_u32(zero, tmp4, 2);
-    tmp4 = vextq_u32(tmp4, zero, 2); // shift left by 8 bytes
-    tmp3 = veorq_u32(tmp3, tmp5);
-    tmp6 = veorq_u32(tmp6, tmp4);
-
-    *res1 = vreinterpretq_u8_u32(tmp3);
-    *res2 = vreinterpretq_u8_u32(tmp6);
-}
-*/
