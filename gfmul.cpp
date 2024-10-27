@@ -125,24 +125,24 @@ inline void mul128(__m128i a, __m128i b, __m128i *res1, __m128i *res2) {
 __attribute__((target("sse2,pclmul")))
 inline void gfmul (__m128i a, __m128i b, __m128i *res){
     __m128i tmp3, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
-    __m128i XMMMASK = _mm_setr_epi32(0xffffffff, 0x0, 0x0, 0x0);
+    __m128i XMMMASK = _mm_setr_epi32(0xffffffff, 0xffffffff, 0x0, 0x0);
     mul128(a, b, &tmp3, &tmp6);
-    tmp7 = _mm_srli_epi32(tmp6, 31);
-    tmp8 = _mm_srli_epi32(tmp6, 30);
-    tmp9 = _mm_srli_epi32(tmp6, 25);
+    tmp7 = _mm_srli_epi64(tmp6, 63);
+    tmp8 = _mm_srli_epi64(tmp6, 62);
+    tmp9 = _mm_srli_epi64(tmp6, 57);
     tmp7 = _mm_xor_si128(tmp7, tmp8);
     tmp7 = _mm_xor_si128(tmp7, tmp9);
-    tmp8 = _mm_shuffle_epi32(tmp7, 147);
+    tmp8 = _mm_shuffle_epi32(tmp7, 0x4e);
 
     tmp7 = _mm_and_si128(XMMMASK, tmp8);
     tmp8 = _mm_andnot_si128(XMMMASK, tmp8);
     tmp3 = _mm_xor_si128(tmp3, tmp8);
     tmp6 = _mm_xor_si128(tmp6, tmp7);
-    tmp10 = _mm_slli_epi32(tmp6, 1);
+    tmp10 = _mm_slli_epi64(tmp6, 1);
     tmp3 = _mm_xor_si128(tmp3, tmp10);
-    tmp11 = _mm_slli_epi32(tmp6, 2);
+    tmp11 = _mm_slli_epi64(tmp6, 2);
     tmp3 = _mm_xor_si128(tmp3, tmp11);
-    tmp12 = _mm_slli_epi32(tmp6, 7);
+    tmp12 = _mm_slli_epi64(tmp6, 7);
     tmp3 = _mm_xor_si128(tmp3, tmp12);
 
     *res = _mm_xor_si128(tmp3, tmp6);
@@ -201,10 +201,6 @@ void srl128_epi64(__m128i vec, uint64_t shift_amount, __m128i *result) {
         : "r"(res_ptr), "r"(vec_ptr), "r"(shift_amount)
         : "t0", "v1", "v2", "memory"
     );
-}
-vuint64m2_t swap_128bit_vector(vuint64m2_t vec) {
-    // 将 128 位向量的高低 64 位交换
-    return vslidedown_vx_u64m2(vec, vec, 1);
 }
 inline void gfmul(__m128i a, __m128i b, __m128i *res){
     __m128i tmp3, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
