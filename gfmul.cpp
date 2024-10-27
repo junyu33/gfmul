@@ -202,6 +202,10 @@ void srl128_epi64(__m128i vec, uint64_t shift_amount, __m128i *result) {
         : "t0", "v1", "v2", "memory"
     );
 }
+vuint64m2_t swap_128bit_vector(vuint64m2_t vec) {
+    // 将 128 位向量的高低 64 位交换
+    return vslidedown_vx_u64m2(vec, vec, 1);
+}
 inline void gfmul(__m128i a, __m128i b, __m128i *res){
     __m128i tmp3, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
     mul128(a, b, &tmp3, &tmp6);
@@ -212,7 +216,7 @@ inline void gfmul(__m128i a, __m128i b, __m128i *res){
     tmp7 = tmp7 ^ tmp9;
     tmp8 = (tmp7 >> 64) ^ (tmp7 << 64);
 
-    tmp7 = tmp8 & 0xffffffff;
+    tmp7 = tmp8 & 0xffffffffffffffff;
     tmp8 = (tmp8 >> 64) << 64;
     tmp3 = tmp3 ^ tmp8;
     tmp6 = tmp6 ^ tmp7;
