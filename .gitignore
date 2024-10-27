@@ -3,3 +3,5 @@ gfmul_*
 *.doc
 *.docx
 *.pdf
+.cache/
+*.json
