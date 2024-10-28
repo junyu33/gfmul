@@ -1,7 +1,5 @@
 gfmul_*
 *.log
-*.doc
-*.docx
-*.pdf
 .cache/
 *.json
+docs/

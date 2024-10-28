@@ -2,16 +2,19 @@
 ARCH ?= x86_64
 RUN ?= local
 
+# Directory for binaries
+BIN_DIR = bin
+
 # Compiler and flags based on the architecture
 ifeq ($(ARCH), x86_64)
     CXX = g++
     CXXFLAGS = -march=native
-    TARGET = gfmul_x86_64
+    TARGET = $(BIN_DIR)/gfmul_x86_64
     RUN_CMD = ./$(TARGET)
 else ifeq ($(ARCH), arm64)
     CXX = aarch64-linux-gnu-g++
     CXXFLAGS = -march=armv8.1-a+crypto -static
-    TARGET = gfmul_arm64
+    TARGET = $(BIN_DIR)/gfmul_arm64
     ifeq ($(RUN), qemu)
         RUN_CMD = qemu-aarch64 ./$(TARGET)
     else
@@ -20,7 +23,7 @@ else ifeq ($(ARCH), arm64)
 else ifeq ($(ARCH), riscv64)
     CXX = riscv64-linux-gnu-g++
     CXXFLAGS = -march=rv64gcv_zve64x_zvbc -mabi=lp64d -static
-    TARGET = gfmul_riscv64
+    TARGET = $(BIN_DIR)/gfmul_riscv64
     ifeq ($(RUN), qemu)
         RUN_CMD = qemu-riscv64 ./$(TARGET)
     else
@@ -30,14 +33,20 @@ else
     $(error Unsupported architecture $(ARCH))
 endif
 
-# Source files
-SRC = gfmul.cpp
+# Source files - separate source files and headers
+SOURCES = $(wildcard src/*.c src/*.cpp)
+HEADERS = $(wildcard src/*.h)
 
 # Build the target executable
-all: $(TARGET)
+all: $(BIN_DIR) $(TARGET)
 
-$(TARGET): $(SRC)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC)
+# Ensure bin directory exists
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
+
+# Build the target executable
+$(TARGET): $(SOURCES) $(HEADERS) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SOURCES)
 
 # Run the executable based on RUN parameter
 run: $(TARGET)
@@ -45,4 +54,4 @@ run: $(TARGET)
 
 # Clean up generated files
 clean:
-	rm -f gfmul_x86_64 gfmul_arm64 gfmul_riscv64
+	rm -f $(BIN_DIR)/gfmul_x86_64 $(BIN_DIR)/gfmul_arm64 $(BIN_DIR)/gfmul_riscv64

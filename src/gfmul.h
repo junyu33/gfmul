@@ -1,6 +1,6 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdint.h>
+#ifndef GFMUL_H
+#define GFMUL_H
+
 #ifdef __x86_64__
 #include <immintrin.h>
 #elif __aarch64__
@@ -10,14 +10,6 @@
 #include <riscv_vector.h>
 #define __m128i __int128
 #endif
-
-void print128(__m128i var) 
-{
-    int64_t v64val[2];
-    memcpy(v64val, &var, sizeof(v64val));
-    printf("%.16lx%.16lx", v64val[1], v64val[0]);
-}
-
 
 /* multiplication in galois field without reduction */
 #ifdef __x86_64__
@@ -202,7 +194,7 @@ void srl128_epi64(__m128i vec, uint64_t shift_amount, __m128i *result) {
         : "t0", "v1", "v2", "memory"
     );
 }
-inline void gfmul(__m128i a, __m128i b, __m128i *res){
+void gfmul(__m128i a, __m128i b, __m128i *res){
     __m128i tmp3, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
     mul128(a, b, &tmp3, &tmp6);
     srl128_epi64(tmp6, 63, &tmp7);
@@ -226,34 +218,6 @@ inline void gfmul(__m128i a, __m128i b, __m128i *res){
     *res = tmp3 ^ tmp6;
 }
 #endif
-
-int main() {
-    uint64_t mul1[2], mul2[2];
-    scanf("%16lx%16lx", &mul1[1], &mul1[0]);
-    scanf("%16lx%16lx", &mul2[1], &mul2[0]);
-
-    // Define test cases
-#ifdef __x86_64__
-    // Test case for Intel architecture
-    __m128i a = _mm_set_epi64x(mul1[1], mul1[0]);
-    __m128i b = _mm_set_epi64x(mul2[1], mul2[0]);
-#elif __aarch64__
-    // Test case for ARM architecture
-    uint64x2_t a = vcombine_u64(vld1_u64(mul1), vld1_u64(mul1 + 1));
-    uint64x2_t b = vcombine_u64(vld1_u64(mul2), vld1_u64(mul2 + 1));
-#elif __riscv
-    // Test case for RISC-V architecture
-    __int128 a = mul1[1];
-    a = (a << 64) | mul1[0];
-    __int128 b = mul2[1];
-    b = (b << 64) | mul2[0];
 #endif
 
-    __m128i res;
-    gfmul(a, b, &res);
 
-    // Print results
-    print128(res);
-
-    return 0;
-}
