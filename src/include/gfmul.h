@@ -12,48 +12,7 @@
 #endif
 
 /* multiplication in galois field without reduction */
-#ifdef __x86_64__
-__attribute__((target("sse2,pclmul")))
-inline void mul128(__m128i a, __m128i b, __m128i *res1, __m128i *res2) {
-    __m128i tmp3, tmp4, tmp5, tmp6;
-    tmp3 = _mm_clmulepi64_si128(a, b, 0x00);
-    tmp4 = _mm_clmulepi64_si128(a, b, 0x10);
-    tmp5 = _mm_clmulepi64_si128(a, b, 0x01);
-    tmp6 = _mm_clmulepi64_si128(a, b, 0x11);
-
-    tmp4 = _mm_xor_si128(tmp4, tmp5);
-    tmp5 = _mm_slli_si128(tmp4, 8);
-    tmp4 = _mm_srli_si128(tmp4, 8);
-    tmp3 = _mm_xor_si128(tmp3, tmp5);
-    tmp6 = _mm_xor_si128(tmp6, tmp4);
-    // initial mul now in tmp3, tmp6
-    *res1 = tmp3;
-    *res2 = tmp6;
-}
-#elif __aarch64__
-inline void mul128(__m128i a, __m128i b, __m128i *res1, __m128i *res2) {
-    __m128i tmp3, tmp4, tmp5, tmp6;
-    poly64_t a_lo = (poly64_t)vgetq_lane_u64(a, 0);
-    poly64_t b_lo = (poly64_t)vgetq_lane_u64(b, 0);
-    poly64_t a_hi = (poly64_t)vgetq_lane_u64(a, 1);
-    poly64_t b_hi = (poly64_t)vgetq_lane_u64(b, 1);
-
-    tmp3 = vreinterpretq_u64_p128(vmull_p64(a_lo, b_lo));
-    tmp4 = vreinterpretq_u64_p128(vmull_p64(a_hi, b_lo));
-    tmp5 = vreinterpretq_u64_p128(vmull_p64(a_lo, b_hi));
-    tmp6 = vreinterpretq_u64_p128(vmull_p64(a_hi, b_hi));
-
-    tmp4 = veorq_u64(tmp4, tmp5);
-    __m128i zero = vdupq_n_u64(0);
-    tmp5 = vextq_u64(zero, tmp4, 1);
-    tmp4 = vextq_u64(tmp4, zero, 1); 
-    tmp3 = veorq_u64(tmp3, tmp5);
-    tmp6 = veorq_u64(tmp6, tmp4);
-
-    *res1 = tmp3;
-    *res2 = tmp6;
-}
-#elif __riscv
+#ifdef  __riscv
 inline void mul128(__m128i a, __m128i b, __m128i *res1, __m128i *res2) {
     // Split a and b into 64-bit lower and upper parts
     uint64_t a_lo = a, a_hi = a >> 64;
@@ -116,9 +75,18 @@ inline void mul128(__m128i a, __m128i b, __m128i *res1, __m128i *res2) {
 #ifdef __x86_64__
 __attribute__((target("sse2,pclmul")))
 inline void gfmul (__m128i a, __m128i b, __m128i *res){
-    __m128i tmp3, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
+    __m128i tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
     __m128i XMMMASK = _mm_setr_epi32(0xffffffff, 0xffffffff, 0x0, 0x0);
-    mul128(a, b, &tmp3, &tmp6);
+    tmp3 = _mm_clmulepi64_si128(a, b, 0x00);
+    tmp4 = _mm_clmulepi64_si128(a, b, 0x10);
+    tmp5 = _mm_clmulepi64_si128(a, b, 0x01);
+    tmp6 = _mm_clmulepi64_si128(a, b, 0x11);
+
+    tmp4 = _mm_xor_si128(tmp4, tmp5);
+    tmp5 = _mm_slli_si128(tmp4, 8);
+    tmp4 = _mm_srli_si128(tmp4, 8);
+    tmp3 = _mm_xor_si128(tmp3, tmp5);
+    tmp6 = _mm_xor_si128(tmp6, tmp4);
     tmp7 = _mm_srli_epi64(tmp6, 63);
     tmp8 = _mm_srli_epi64(tmp6, 62);
     tmp9 = _mm_srli_epi64(tmp6, 57);
@@ -141,10 +109,25 @@ inline void gfmul (__m128i a, __m128i b, __m128i *res){
 }
 #elif __aarch64__
 inline void gfmul(__m128i a, __m128i b, __m128i *res){
-    uint64x2_t tmp3, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
+    uint64x2_t tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
     uint64x2_t XMMMASK = {0xffffffffffffffff, 0x0};
     uint64x2_t INV_XMMMASK = {0x0, 0xffffffffffffffff};
-    mul128(a, b, &tmp3, &tmp6);
+    poly64_t a_lo = (poly64_t)vgetq_lane_u64(a, 0);
+    poly64_t b_lo = (poly64_t)vgetq_lane_u64(b, 0);
+    poly64_t a_hi = (poly64_t)vgetq_lane_u64(a, 1);
+    poly64_t b_hi = (poly64_t)vgetq_lane_u64(b, 1);
+
+    tmp3 = vreinterpretq_u64_p128(vmull_p64(a_lo, b_lo));
+    tmp4 = vreinterpretq_u64_p128(vmull_p64(a_hi, b_lo));
+    tmp5 = vreinterpretq_u64_p128(vmull_p64(a_lo, b_hi));
+    tmp6 = vreinterpretq_u64_p128(vmull_p64(a_hi, b_hi));
+
+    tmp4 = veorq_u64(tmp4, tmp5);
+    __m128i zero = vdupq_n_u64(0);
+    tmp5 = vextq_u64(zero, tmp4, 1);
+    tmp4 = vextq_u64(tmp4, zero, 1); 
+    tmp3 = veorq_u64(tmp3, tmp5);
+    tmp6 = veorq_u64(tmp6, tmp4);
     tmp7 = vshrq_n_u64(tmp6, 63);
     tmp8 = vshrq_n_u64(tmp6, 62);
     tmp9 = vshrq_n_u64(tmp6, 57);
@@ -194,7 +177,7 @@ void srl128_epi64(__m128i vec, uint64_t shift_amount, __m128i *result) {
         : "t0", "v1", "v2", "memory"
     );
 }
-void gfmul(__m128i a, __m128i b, __m128i *res){
+inline void gfmul(__m128i a, __m128i b, __m128i *res){
     __m128i tmp3, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
     mul128(a, b, &tmp3, &tmp6);
     srl128_epi64(tmp6, 63, &tmp7);

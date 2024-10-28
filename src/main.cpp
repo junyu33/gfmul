@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-#include "gfmul.h"
+#include "include/gfmul.h"
 
 void print128(__m128i var) 
 {
