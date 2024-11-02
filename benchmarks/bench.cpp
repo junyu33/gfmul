@@ -1,17 +1,17 @@
+#include <cstdint>
 #include <stdio.h>
 #include <stdint.h>
-#include <random>
-#include <algorithm>
 #include <chrono>
 #include "../src/include/gfmul.h"
-//#include "../src/include/wangxiao.h"
+#include "../src/include/wangxiao.h"
 //#include "../src/include/intel.h"
 
-const int iterations = 10000000;  // 10^6 次运算
-__m128i a[iterations], b[iterations], res;
+const int iterations = 10000000;  // 10^7 次运算
+__m128i a[iterations], b[iterations];
+u_int64_t res;
 
 void init() {
-    FILE* file = fopen("random_128bit_numbers.txt", "r");
+    FILE* file = fopen("random_numbers.txt", "r");
     if (!file) {
         fprintf(stderr, "Error opening file\n");
         return;
@@ -19,15 +19,14 @@ void init() {
 
     uint64_t mul1[2], mul2[2];
     for (int i = 0; i < iterations; ++i) {
-        if (fscanf(file, "%16lx%16lx", &mul1[1], &mul1[0]) != 2 ||
-            fscanf(file, "%16lx%16lx", &mul2[1], &mul2[0]) != 2) {
+        if (fscanf(file, "%16lx%16lx", &mul1[1], &mul1[0]) != 2) {
             fprintf(stderr, "Error reading input data\n");
             fclose(file);
             return;
         }
 #ifdef __x86_64__
-        a[i] = _mm_set_epi64x(mul1[1], mul1[0]);
-        b[i] = _mm_set_epi64x(mul2[1], mul2[0]);
+        a[i] = _mm_set_epi64x(0, mul1[1]);
+        b[i] = _mm_set_epi64x(0, mul1[0]);
 #elif __aarch64__
         a[i] = vcombine_u64(vld1_u64(mul1), vld1_u64(mul1 + 1));
         b[i] = vcombine_u64(vld1_u64(mul2), vld1_u64(mul2 + 1));
@@ -44,7 +43,7 @@ int main() {
     auto start = std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < iterations; ++i) {
-        gfmul(a[i], b[i], &res);
+        gfmul64(a[i], b[i], &res);
     }
 
     // 结束计时
@@ -52,7 +51,7 @@ int main() {
     std::chrono::duration<double> duration = end - start;
     printf("Total execution time: %.5f seconds\n", duration.count());
 
-/*    std::random_device rd;*/
+    /*std::random_device rd;*/
     /*std::mt19937 gen(rd());*/
 
     /*// 打乱数组 a 和 b*/
@@ -62,7 +61,7 @@ int main() {
     /*start = std::chrono::high_resolution_clock::now();*/
 
     /*for (int i = 0; i < iterations; ++i) {*/
-        /*gfmul_intel(a[i], b[i], &res);*/
+        /*gfmul_wangxiao(a[i], b[i], &res);*/
     /*}*/
 
     /*// 结束计时*/

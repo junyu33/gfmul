@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -8,6 +9,11 @@ void print128(__m128i var)
     int64_t v64val[2];
     memcpy(v64val, &var, sizeof(v64val));
     printf("%.16lx%.16lx", v64val[1], v64val[0]);
+}
+
+void print64(uint64_t var) 
+{
+    printf("%.16lx", var);
 }
 
 
@@ -32,12 +38,6 @@ int main() {
     __int128 b = mul2[1];
     b = (b << 64) | mul2[0];
 #endif
-
-    __m128i res;
-    gfmul(a, b, &res);
-
-    // Print results
-    print128(res);
 
     return 0;
 }

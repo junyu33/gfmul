@@ -1,6 +1,7 @@
 # Default architecture and run mode
 ARCH ?= x86_64
 RUN ?= local
+BITS ?= 128
 
 # Directory for binaries
 BIN_DIR = ./
@@ -48,7 +49,7 @@ $(BIN_DIR):
 
 gen: 
 	g++ -o $(BIN_DIR)/gen $(GEN_SOURCE)	
-	$(BIN_DIR)/gen
+	$(BIN_DIR)/gen $(BITS)
 
 # Build the target executable
 $(TARGET): $(SOURCES) | $(BIN_DIR)
@@ -62,4 +63,4 @@ run: $(TARGET)
 clean:
 	rm -f $(BIN_DIR)/$(BENCH)_x86_64 $(BIN_DIR)/$(BENCH)_arm64 $(BIN_DIR)/$(BENCH)_riscv64
 	rm -f $(BIN_DIR)/gen
-	rm -f random_128bit_numbers.txt
+	rm -f *.txt
