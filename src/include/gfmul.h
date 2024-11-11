@@ -194,7 +194,7 @@ inline void mul128(__m128i a, __m128i b, __m128i *res1, __m128i *res2) {
     *res1 = tmp3;
     *res2 = tmp6;
 }
-void sll128_epi64(__m128i vec, uint64_t shift_amount, __m128i *result) {
+inline void sll128_epi64(__m128i vec, uint64_t shift_amount, __m128i *result) {
     uint64_t *vec_ptr = (uint64_t *)&vec;
     uint64_t *res_ptr = (uint64_t *)result;
 
@@ -208,7 +208,7 @@ void sll128_epi64(__m128i vec, uint64_t shift_amount, __m128i *result) {
         : "t0", "v1", "v2", "memory"
     );
 }
-void srl128_epi64(__m128i vec, uint64_t shift_amount, __m128i *result) {
+inline void srl128_epi64(__m128i vec, uint64_t shift_amount, __m128i *result) {
     uint64_t *vec_ptr = (uint64_t *)&vec;
     uint64_t *res_ptr = (uint64_t *)result;
 
