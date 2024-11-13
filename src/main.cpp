@@ -39,5 +39,8 @@ int main() {
     b = (b << 64) | mul2[0];
 #endif
 
+    __m128i res;
+    gfmul(a, b, &res);
+    print128(res);
     return 0;
 }

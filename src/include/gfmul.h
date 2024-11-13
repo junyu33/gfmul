@@ -146,38 +146,27 @@ inline void mul128(__m128i a, __m128i b, __m128i *res1, __m128i *res2) {
     uint64_t tmp3_lo, tmp3_hi, tmp4_lo, tmp4_hi, 
              tmp5_lo, tmp5_hi, tmp6_lo, tmp6_hi;
 
-    // Multiply lower parts, vclmul.vv
     __asm__ __volatile__ (
-        "vsetvli t0, x0, e64, m1\n" 
-        "vmv.v.x v8, %8\n"          
-        "vmv.v.x v9, %9\n"
-        "vmv.v.x v10, %10\n"
-        "vmv.v.x v11, %11\n"
+        "mv t0, %8\n"             
+        "mv t1, %9\n"             
+        "mv t2, %10\n"             
+        "mv t3, %11\n"             
 
-        "vclmul.vv v0, v8, v9\n"  // tmp3_low = a_low * b_low
-        "vclmulh.vv v1, v8, v9\n" // tmp3_high = a_low * b_low
-        "vclmul.vv v2, v10, v9\n" // tmp4_low = a_high * b_low
-        "vclmulh.vv v3, v10, v9\n" // tmp4_high = a_high * b_low
-        "vclmul.vv v4, v8, v11\n" // tmp5_low = a_low * b_high
-        "vclmulh.vv v5, v8, v11\n" // tmp5_high = a_low * b_high
-        "vclmul.vv v6, v10, v11\n" // tmp6_low = a_high * b_high
-        "vclmulh.vv v7, v10, v11\n" // tmp6_high = a_high * b_high
-        
-        "vmv.x.s %0, v0\n"
-        "vmv.x.s %1, v1\n"
-        "vmv.x.s %2, v2\n"
-        "vmv.x.s %3, v3\n"
-        "vmv.x.s %4, v4\n"
-        "vmv.x.s %5, v5\n"
-        "vmv.x.s %6, v6\n"
-        "vmv.x.s %7, v7\n"
+        "clmul   %0, t0, t1\n"   
+        "clmulh  %1, t0, t1\n" 
+        "clmul   %2, t2, t1\n" 
+        "clmulh  %3, t2, t1\n" 
+        "clmul   %4, t0, t3\n" 
+        "clmulh  %5, t0, t3\n" 
+        "clmul   %6, t2, t3\n" 
+        "clmulh  %7, t2, t3\n" 
 
         : "=r" (tmp3_lo), "=r" (tmp3_hi), 
           "=r" (tmp4_lo), "=r" (tmp4_hi), 
           "=r" (tmp5_lo), "=r" (tmp5_hi), 
           "=r" (tmp6_lo), "=r" (tmp6_hi)
         : "r" (a_lo), "r" (b_lo), "r" (a_hi), "r" (b_hi)
-        : "t0", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11"
+        : "t0", "t1", "t2", "t3"
     );
 
     __m128i tmp3 = ((__m128i)tmp3_hi << 64) | tmp3_lo;
