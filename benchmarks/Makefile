@@ -3,6 +3,10 @@ ARCH ?= x86_64
 RUN ?= local
 BITS ?= 128
 
+# Header file selection
+HEADER ?= GFMUL
+HEADER_OPTIONS = WANGXIAO INTEL CLASSIC GFMUL KARATSUBA
+
 # Directory for binaries
 BIN_DIR = ./
 # filename
@@ -25,7 +29,7 @@ else ifeq ($(ARCH), arm64)
     endif
 else ifeq ($(ARCH), riscv64)
     CXX = riscv64-linux-gnu-g++
-    CXXFLAGS = -march=rv64gcv_zve64x_zvbc -mabi=lp64d -static
+    CXXFLAGS = -march=rv64gv_zbb_zbc -mabi=lp64d -static
     TARGET = $(BIN_DIR)/$(BENCH)_riscv64
     ifeq ($(RUN), qemu)
         RUN_CMD = qemu-riscv64 ./$(TARGET)
@@ -34,6 +38,13 @@ else ifeq ($(ARCH), riscv64)
     endif
 else
     $(error Unsupported architecture $(ARCH))
+endif
+
+# Ensure valid HEADER value
+ifneq (,$(filter $(HEADER),$(HEADER_OPTIONS)))
+    CXXFLAGS += -DHEADER_$(HEADER)
+else
+    $(error Unsupported HEADER $(HEADER). Supported options: $(HEADER_OPTIONS))
 endif
 
 # Source files - separate source files and headers
@@ -53,7 +64,7 @@ gen:
 
 # Build the target executable
 $(TARGET): $(SOURCES) | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SOURCES)
+	$(CXX) $(CXXFLAGS) -DUSE_$(HEADER) -o $(TARGET) $(SOURCES)
 
 # Run the executable based on RUN parameter
 run: $(TARGET)
@@ -62,5 +73,3 @@ run: $(TARGET)
 # Clean up generated files
 clean:
 	rm -f $(BIN_DIR)/$(BENCH)_x86_64 $(BIN_DIR)/$(BENCH)_arm64 $(BIN_DIR)/$(BENCH)_riscv64
-	rm -f $(BIN_DIR)/gen
-	rm -f *.txt

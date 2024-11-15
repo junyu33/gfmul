@@ -1,15 +1,6 @@
 #ifndef GFMUL_H
 #define GFMUL_H
-
-#ifdef __x86_64__
-#include <immintrin.h>
-#elif __aarch64__
-#include <arm_neon.h>
-#define __m128i uint64x2_t
-#elif __riscv
-#include <riscv_vector.h>
-#define __m128i __int128
-#endif
+#include "common.h"
 
 /* multiplication in galois field with reduction */
 #ifdef __x86_64__

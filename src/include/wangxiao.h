@@ -1,19 +1,9 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdint.h>
-#ifdef __x86_64__
-#include <immintrin.h>
-#elif __aarch64__
-#include <arm_neon.h>
-#define __m128i uint64x2_t
-#elif __riscv
-#include <riscv_vector.h>
-#define __m128i __int128
-#endif
+#include "common.h"
+
 /* multiplication in galois field without reduction */
 #ifdef __x86_64__
 __attribute__((target("sse2,pclmul")))
-inline void mul128_wangxiao(__m128i a, __m128i b, __m128i *res1, __m128i *res2) {
+inline void mul128(__m128i a, __m128i b, __m128i *res1, __m128i *res2) {
 	__m128i tmp3, tmp4, tmp5, tmp6;
 	tmp3 = _mm_clmulepi64_si128(a, b, 0x00);
 	tmp4 = _mm_clmulepi64_si128(a, b, 0x10);
@@ -32,10 +22,10 @@ inline void mul128_wangxiao(__m128i a, __m128i b, __m128i *res1, __m128i *res2) 
 /* multiplication in galois field with reduction */
 #ifdef __x86_64__
 __attribute__((target("sse2,pclmul")))
-inline void gfmul_wangxiao (__m128i a, __m128i b, __m128i *res) {
+inline void gfmul(__m128i a, __m128i b, __m128i *res) {
 	__m128i tmp3, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
 	__m128i XMMMASK = _mm_setr_epi32(0xffffffff, 0x0, 0x0, 0x0);
-	mul128_wangxiao(a, b, &tmp3, &tmp6);
+	mul128(a, b, &tmp3, &tmp6);
 	tmp7 = _mm_srli_epi32(tmp6, 31);
 	tmp8 = _mm_srli_epi32(tmp6, 30);
 	tmp9 = _mm_srli_epi32(tmp6, 25);

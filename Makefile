@@ -5,6 +5,9 @@ RUN ?= local
 # Directory for binaries
 BIN_DIR = bin
 
+HEADER ?= GFMUL
+HEADER_OPTIONS = WANGXIAO INTEL CLASSIC GFMUL KARATSUBA
+
 # Compiler and flags based on the architecture
 ifeq ($(ARCH), x86_64)
     CXX = g++
@@ -35,7 +38,13 @@ endif
 
 # Source files - separate source files and headers
 SOURCES = $(wildcard src/*.c src/*.cpp)
-HEADERS = $(wildcard src/include/*.h)
+
+# Ensure valid HEADER value
+ifneq (,$(filter $(HEADER),$(HEADER_OPTIONS)))
+    CXXFLAGS += -DHEADER_$(HEADER)
+else
+    $(error Unsupported HEADER $(HEADER). Supported options: $(HEADER_OPTIONS))
+endif
 
 # Build the target executable
 all: $(BIN_DIR) $(TARGET)
@@ -45,8 +54,8 @@ $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
 
 # Build the target executable
-$(TARGET): $(SOURCES) $(HEADERS) | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SOURCES)
+$(TARGET): $(SOURCES) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) -DUSE_$(HEADER) -o $(TARGET) $(SOURCES)
 
 # Run the executable based on RUN parameter
 run: $(TARGET)
