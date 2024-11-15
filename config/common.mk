@@ -47,7 +47,3 @@ endif
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
 
-# Clean up generated files
-clean:
-	rm -rf $(BIN_DIR)
-

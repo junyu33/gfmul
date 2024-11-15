@@ -3,3 +3,8 @@ gfmul_*
 .cache/
 *.json
 docs/
+bin/
+benchmarks/*.txt
+benchmarks/gen
+benchmarks/bench_*
+

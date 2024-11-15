@@ -29,7 +29,7 @@ inline void gfmul64(__m128i a, __m128i b, u_int64_t *res) {
 
     *res = tmp3 ^ tmp6;
 }
-inline void gfmul (__m128i a, __m128i b, __m128i *res){
+inline void gfmul(__m128i a, __m128i b, __m128i *res){
     __m128i tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
     __m128i XMMMASK = _mm_setr_epi32(0xffffffff, 0xffffffff, 0x0, 0x0);
     tmp3 = _mm_clmulepi64_si128(a, b, 0x00);
@@ -63,7 +63,7 @@ inline void gfmul (__m128i a, __m128i b, __m128i *res){
     *res = _mm_xor_si128(tmp3, tmp6);
 }
 #elif __aarch64__
-inline void gfmul64(__m128i a, __m128i b, uint64_t *res) {
+inline void gfmul64(__int128 a, __int128 b, uint64_t *res) {
     poly128_t mul; // 128-bit result from carry-less multiplication
     uint64_t tmp3, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
 
@@ -89,7 +89,7 @@ inline void gfmul64(__m128i a, __m128i b, uint64_t *res) {
 
     *res = tmp3 ^ tmp6;
 }
-inline void gfmul(__m128i a, __m128i b, __m128i *res){
+inline void gfmul(__int128 a, __int128 b, __int128 *res){
     uint64x2_t tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
     uint64x2_t XMMMASK = {0xffffffffffffffff, 0x0};
     uint64x2_t INV_XMMMASK = {0x0, 0xffffffffffffffff};
@@ -104,7 +104,7 @@ inline void gfmul(__m128i a, __m128i b, __m128i *res){
     tmp6 = vreinterpretq_u64_p128(vmull_p64(a_hi, b_hi));
 
     tmp4 = veorq_u64(tmp4, tmp5);
-    __m128i zero = vdupq_n_u64(0);
+    __int128 zero = vdupq_n_u64(0);
     tmp5 = vextq_u64(zero, tmp4, 1);
     tmp4 = vextq_u64(tmp4, zero, 1); 
     tmp3 = veorq_u64(tmp3, tmp5);
@@ -130,7 +130,7 @@ inline void gfmul(__m128i a, __m128i b, __m128i *res){
     *res = veorq_u64(tmp3, tmp6);
 }
 #elif __riscv
-inline void mul128(__m128i a, __m128i b, __m128i *res1, __m128i *res2) {
+inline void mul128(__int128 a, __int128 b, __int128 *res1, __int128 *res2) {
     // Split a and b into 64-bit lower and upper parts
     uint64_t a_lo = a, a_hi = a >> 64;
     uint64_t b_lo = b, b_hi = b >> 64;
@@ -160,10 +160,10 @@ inline void mul128(__m128i a, __m128i b, __m128i *res1, __m128i *res2) {
         : "t0", "t1", "t2", "t3"
     );
 
-    __m128i tmp3 = ((__m128i)tmp3_hi << 64) | tmp3_lo;
-    __m128i tmp4 = ((__m128i)tmp4_hi << 64) | tmp4_lo;
-    __m128i tmp5 = ((__m128i)tmp5_hi << 64) | tmp5_lo;
-    __m128i tmp6 = ((__m128i)tmp6_hi << 64) | tmp6_lo;
+    __int128 tmp3 = ((__int128)tmp3_hi << 64) | tmp3_lo;
+    __int128 tmp4 = ((__int128)tmp4_hi << 64) | tmp4_lo;
+    __int128 tmp5 = ((__int128)tmp5_hi << 64) | tmp5_lo;
+    __int128 tmp6 = ((__int128)tmp6_hi << 64) | tmp6_lo;
 
     tmp4 = tmp4 ^ tmp5;
     tmp5 = tmp4 << 64;
@@ -174,7 +174,7 @@ inline void mul128(__m128i a, __m128i b, __m128i *res1, __m128i *res2) {
     *res1 = tmp3;
     *res2 = tmp6;
 }
-inline void sll128_epi64(__m128i vec, uint64_t shift_amount, __m128i *result) {
+inline void sll128_epi64(__int128 vec, uint64_t shift_amount, __int128 *result) {
     uint64_t *vec_ptr = (uint64_t *)&vec;
     uint64_t *res_ptr = (uint64_t *)result;
 
@@ -188,7 +188,7 @@ inline void sll128_epi64(__m128i vec, uint64_t shift_amount, __m128i *result) {
         : "t0", "v1", "v2", "memory"
     );
 }
-inline void srl128_epi64(__m128i vec, uint64_t shift_amount, __m128i *result) {
+inline void srl128_epi64(__int128 vec, uint64_t shift_amount, __int128 *result) {
     uint64_t *vec_ptr = (uint64_t *)&vec;
     uint64_t *res_ptr = (uint64_t *)result;
 
@@ -202,8 +202,8 @@ inline void srl128_epi64(__m128i vec, uint64_t shift_amount, __m128i *result) {
         : "t0", "v1", "v2", "memory"
     );
 }
-inline void gfmul(__m128i a, __m128i b, __m128i *res){
-    __m128i tmp3, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
+inline void gfmul(__int128 a, __int128 b, __int128 *res){
+    __int128 tmp3, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
     mul128(a, b, &tmp3, &tmp6);
     srl128_epi64(tmp6, 63, &tmp7);
     srl128_epi64(tmp6, 62, &tmp8);
