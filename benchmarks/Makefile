@@ -14,7 +14,7 @@ all: $(BIN_DIR) $(TARGET)
 
 # Build the target executable
 $(TARGET): $(SOURCES) | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SOURCES)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SOURCES) $(LDFLAGS)
 
 # Generate input
 gen: 

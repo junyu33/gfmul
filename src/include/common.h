@@ -4,11 +4,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#ifdef __karatsuba__
-#define __classic__
-#endif
-
-#ifdef __fft__
+#ifdef __ntl__
 #define __classic__
 #endif
 

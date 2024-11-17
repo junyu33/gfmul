@@ -6,11 +6,14 @@ RUN ?= local
 BIN_DIR ?= bin
 
 # Header options
-HEADER_OPTIONS = WANGXIAO INTEL CLASSIC GFMUL KARATSUBA
+HEADER_OPTIONS = WANGXIAO INTEL CLASSIC GFMUL NTL
 
 # Ensure valid HEADER value
 ifneq (,$(filter $(HEADER),$(HEADER_OPTIONS)))
-    CXXFLAGS += -DHEADER_$(HEADER)
+    CXXFLAGS += -DUSE_$(HEADER)
+    ifeq ($(HEADER), NTL)
+        LDFLAGS += -lntl -lgmp
+    endif
 else
     $(error Unsupported HEADER $(HEADER). Supported options: $(HEADER_OPTIONS))
 endif

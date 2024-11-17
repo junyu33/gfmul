@@ -8,6 +8,18 @@ The irriducible polynomial is $x^{128} + x^7 + x^2 + x + 1$.
 
 ## dependencies (in typical x86-64 machine)
 
+> To run the control group, you also need to install NTL and gmp (instruction for debian based).
+>
+> ```bash
+> sudo apt-get install libgmp-dev
+> wget https://libntl.org/ntl-11.5.1.tar.gz
+> cd ntl-11.5.1/src
+> ./configure 
+> make
+> sudo make install
+> ```
+
+
 ### debian based
 
 ```bash
@@ -47,4 +59,10 @@ in riscv64:
 
 ```bash
 make run ARCH=riscv64 RUN=qemu
+```
+
+in x86-64 using NTL:
+
+```bash
+make run ARCH=x86_64 USE_NTL=1
 ```
