@@ -5,10 +5,10 @@ from sage.all import PolynomialRing, GF
 P.<x> = PolynomialRing(GF(2))
 
 # 定义模多项式
-mod_poly = x^32 + x^7 + x^3 + x^2 + 1
+mod_poly = x^128 + x^7 + x^2 + x + 1
 
 # 定义有限域 GF(2^128)
-K.<a> = GF(2**32, modulus=mod_poly)
+K.<a> = GF(2**128, modulus=mod_poly)
 
 # 将整数转换为多项式
 def int_to_poly(n):
@@ -36,4 +36,4 @@ mul_result = f * g
 
 # 将结果转换回整数并显示为十六进制
 mul_result_int = poly_to_int(mul_result.polynomial())
-print(hex(mul_result_int)[2:].zfill(16))
+print(hex(mul_result_int)[2:].zfill(32))

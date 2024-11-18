@@ -26,7 +26,7 @@ run: $(TARGET)
 	$(RUN_CMD)
 
 clean: 
-	rm -rf $(BIN_DIR)/$(TARGET)
+	rm -rf $(BIN_DIR)/$(BENCH)_*
 
 clean-all: clean
 	rm -rf $(BIN_DIR)/gen

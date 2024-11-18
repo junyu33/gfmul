@@ -174,40 +174,14 @@ inline void mul128(__int128 a, __int128 b, __int128 *res1, __int128 *res2) {
     *res1 = tmp3;
     *res2 = tmp6;
 }
-inline void sll128_epi64(__int128 vec, uint64_t shift_amount, __int128 *result) {
-    uint64_t *vec_ptr = (uint64_t *)&vec;
-    uint64_t *res_ptr = (uint64_t *)result;
 
-    __asm__ __volatile__ (
-        "vsetvli t0, x0, e64, m1\n"          
-        "vle64.v v1, (%1)\n"                 
-        "vsll.vx v2, v1, %2\n"               
-        "vse64.v v2, (%0)\n"                 
-        :                                  
-        : "r"(res_ptr), "r"(vec_ptr), "r"(shift_amount)
-        : "t0", "v1", "v2", "memory"
-    );
-}
-inline void srl128_epi64(__int128 vec, uint64_t shift_amount, __int128 *result) {
-    uint64_t *vec_ptr = (uint64_t *)&vec;
-    uint64_t *res_ptr = (uint64_t *)result;
-
-    __asm__ __volatile__ (
-        "vsetvli t0, x0, e64, m1\n"        
-        "vle64.v v1, (%1)\n"                 
-        "vsrl.vx v2, v1, %2\n"               
-        "vse64.v v2, (%0)\n"                 
-        :                                   
-        : "r"(res_ptr), "r"(vec_ptr), "r"(shift_amount)
-        : "t0", "v1", "v2", "memory"
-    );
-}
 inline void gfmul(__int128 a, __int128 b, __int128 *res){
     __int128 tmp3, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12;
     mul128(a, b, &tmp3, &tmp6);
-    srl128_epi64(tmp6, 63, &tmp7);
-    srl128_epi64(tmp6, 62, &tmp8);
-    srl128_epi64(tmp6, 57, &tmp9);
+    tmp7 = (tmp6 >> 63) & (1 | ( (__int128) 1 << 64)); 
+    tmp8 = (tmp6 >> 62) & (3 | ( (__int128) 3 << 64)); 
+    tmp9 = (tmp6 >> 57) & (127 | ( (__int128) 127 << 64)); 
+
     tmp7 = tmp7 ^ tmp8;
     tmp7 = tmp7 ^ tmp9;
     tmp8 = (tmp7 >> 64) ^ (tmp7 << 64);
@@ -216,11 +190,11 @@ inline void gfmul(__int128 a, __int128 b, __int128 *res){
     tmp8 = (tmp8 >> 64) << 64;
     tmp3 = tmp3 ^ tmp8;
     tmp6 = tmp6 ^ tmp7;
-    sll128_epi64(tmp6, 1, &tmp10);
+    tmp10 = (tmp6 << 1) & ~( (__int128) 1 << 64);
     tmp3 = tmp3 ^ tmp10;
-    sll128_epi64(tmp6, 2, &tmp11);
+    tmp11 = (tmp6 << 2) & ~( (__int128) 3 << 64);
     tmp3 = tmp3 ^ tmp11;
-    sll128_epi64(tmp6, 7, &tmp12);
+    tmp12 = (tmp6 << 7) & ~( (__int128) 127 << 64);
     tmp3 = tmp3 ^ tmp12;
 
     *res = tmp3 ^ tmp6;

@@ -12,7 +12,7 @@ HEADER_OPTIONS = WANGXIAO INTEL CLASSIC GFMUL NTL
 ifneq (,$(filter $(HEADER),$(HEADER_OPTIONS)))
     CXXFLAGS += -DUSE_$(HEADER)
     ifeq ($(HEADER), NTL)
-        LDFLAGS += -lntl -lgmp
+        LDFLAGS += -lntl -lgmp -lgf2x 
     endif
 else
     $(error Unsupported HEADER $(HEADER). Supported options: $(HEADER_OPTIONS))

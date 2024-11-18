@@ -4,6 +4,9 @@ def sll8(x, n):
 def sll32(x, n):
     return x << n & 0xffffffff
 
+def sll128(x, n):
+    return x << n & 0xffffffffffffffffffffffffffffffff
+
 def mul8(a: int, b: int):
     # 确保输入是8位的无符号整数
     mask_8bit = (1 << 8) - 1
@@ -63,14 +66,19 @@ def mul128(a: int, b: int):
 
 def gfmul(a, b):
     tmp3, tmp6 = mul128(a, b)
-    T = ((tmp6 >> 31) ^ (tmp6 >> 30) ^ (tmp6 >> 25))
+    tmp3 ^= sll128(tmp6, 7);
+    tmp3 ^= sll128(tmp6, 2);
+    tmp3 ^= sll128(tmp6, 1);
+    tmp3 ^= tmp6;
 
-    res = tmp3 ^ \
-      (T >> 96) ^ tmp6 ^ \
-      (((T >> 96) ^ tmp6) << 1) ^ \
-      (((T >> 96) ^ tmp6) << 2) ^ \
-      (((T >> 96) ^ tmp6) << 7)
-    return res % (2 ** 128 - 1)
+    tmp10 = tmp6 >> 121;
+    tmp11 = tmp6 >> 126;
+    tmp12 = tmp6 >> 127;
+    tmp10 ^= tmp11;
+    tmp10 ^= tmp12;
+    tmp10 *= 0x87;
+
+    return tmp3 ^ tmp10
 
 def gfmul8(a, b):
     tmp3, tmp6 = mul8(a, b)
@@ -99,6 +107,12 @@ def gfmul32(a, b):
     tmp6 = tmp6 ^ tmp12
     return tmp3 ^ tmp6
 
-a, b = 0x8512a248, 0xd550d894
-print(hex(gfmul32(a, b)))
+a = 0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d
+b = 0xabcdef1234567890fedcba0987654321
+print(hex(gfmul(a, b))[2:].zfill(32))
+
+'''
+22222222222222222222222222222222
+11111111111111111111111111111111
+'''
 
